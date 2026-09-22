@@ -1,49 +1,71 @@
 package ar.edu.unju.fi.arquitecturas.tp2banco.modelo;
 
 import jakarta.persistence.*;
-import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDateTime;
+import java.util.UUID;
 
-
-//lombok
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
-@Builder // Crea un constructor fluido para instanciar el objeto campo por campo. Se usa en clases simples sin herencia.
-
-
-//anotaciones JPA para la tabla en mysql
+/**
+ * Entidad que representa a un Cliente del banco en la base de datos.
+ *
+ * Hereda de Auditable para registrar automaticamente las fechas de creacion
+ * y modificacion.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
-@Table(name = "cliente")
+@Table(name = "clientes")
+public class Cliente extends Auditable {
 
+    /**
+     * Identificador del cliente utilizando UUID.
+     * Esto evita que los IDs sean predecibles o vulnerables a enumeracion.
+     */
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
+    private UUID id;
 
-@EntityListeners(AuditingEntityListener.class) // <--- Registra eventos de creación/modificación
-
-
-
-public class Cliente {
-
-    @Id // Indica que 'id' es la clave primaria de la tabla en la BD
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Hace que MySQL genere el ID automáticamente de forma incremental
-    private Long id;
-
-
+    /**
+     * Nombres del cliente.
+     */
+    @Column(name = "nombre", nullable = false, length = 60)
     private String nombre;
-    private Long cuil;
+
+    /**
+     * Apellidos del cliente.
+     */
+    @Column(name = "apellido", nullable = false, length = 60)
+    private String apellido;
+
+    /**
+     * DNI argentino (unico y de 8 caracteres).
+     */
+    @Column(name = "dni", nullable = false, unique = true, length = 8)
+    private String dni;
+
+    /**
+     * cuil sin guiones (11 dígitos).
+     */
+    @Column(name = "cuil", nullable = false, unique = true, length = 11)
+    private String cuil;
+
+    /**
+     * Correo electronico del cliente.
+     */
+    @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
-    private Integer telefono;
-    private String direccion;
 
-
-    // --- CAMPOS DE AUDITORÍA ---
-    @CreatedDate
-    @Column(name = "fecha_creacion", nullable = false, updatable = false)
-    private LocalDateTime fechaCreacion; // Se registra automáticamente al insertar
-
-    @LastModifiedDate
-    @Column(name = "fecha_modificacion")
-    private LocalDateTime fechaModificacion; // Se actualiza automáticamente al modificar
-
+    /**
+     * Numero de telefono del cliente.
+     */
+    @Column(name = "telefono", nullable = false, length = 20)
+    private String telefono;
 }

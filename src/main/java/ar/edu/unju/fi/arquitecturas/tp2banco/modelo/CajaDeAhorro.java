@@ -1,5 +1,6 @@
 package ar.edu.unju.fi.arquitecturas.tp2banco.modelo;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -8,18 +9,27 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-//lombok
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
-@SuperBuilder // Permite construir esta clase usando también los atributos que hereda del padre (cuenta bancaria)
+import java.math.BigDecimal;
 
-//anotaciones JPA para la tabla en mysql
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
-@Table(name = "caja_de_ahorro")
-
+@Table(name = "cajas_de_ahorro")
 public class CajaDeAhorro extends CuentaBancaria {
 
+    /**
+     * Limite para la caja de ahorro.
+     */
+    @Column(name = "cupo_limite", nullable = false)
     private Integer cupoLimite;
-    private Float tasaInteresAnual;
 
-
+    /**
+     * tasa de interes anual asociado a la caja.
+     */
+    @Column(name = "tasa_interes_anual", nullable = false, precision = 5, scale = 2)
+    private BigDecimal tasaInteresAnual;
 }
