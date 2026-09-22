@@ -69,7 +69,7 @@ public class CuentaBancariaServiceImpl implements CuentaBancariaService {
     @Override
     @Transactional(readOnly = true)
     public Page<CuentaBancaria> listarPorEstado(EstadoCuenta estado, Pageable pageable) {
-        return cuentaRepository.findAll(pageable);
+        return cuentaRepository.findByEstado(estado, pageable);
     }
 
     @Override

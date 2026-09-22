@@ -16,8 +16,8 @@ import java.util.UUID;
 /**
  * Clase base abstracta para todas las cuentas bancarias del sistema.
  *
- * Implementa estrategia JOINED para herencia en JPA y mantiene una relacion
- * unidireccional `@OneToMany` hacia la entidad Transaccion con borrado en cascada (orphanRemoval).
+ * Implementa estrategia JOINED para herencia en JPA y mantiene una relación
+ * bidireccional `@OneToMany` hacia la entidad Transaccion con borrado en cascada (orphanRemoval).
  */
 @Getter
 @Setter
@@ -30,7 +30,7 @@ import java.util.UUID;
 public abstract class CuentaBancaria extends Auditable {
 
     /**
-     * Identificador unico global para la cuenta bancaria utilizando UUID.
+     * Identificador único global para la cuenta bancaria utilizando UUID.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -39,7 +39,7 @@ public abstract class CuentaBancaria extends Auditable {
 
     /**
      * CBU de la cuenta en Argentina.
-     * Numero unico de 22 digitos.
+     * Número único de 22 dígitos.
      */
     @Column(name = "cbu", nullable = false, unique = true, length = 22)
     private String cbu;
@@ -51,7 +51,7 @@ public abstract class CuentaBancaria extends Auditable {
     private String alias;
 
     /**
-     * Saldo actual en la cuenta. Se utiliza BigDecimal por precision financiera.
+     * Saldo actual en la cuenta. Se utiliza BigDecimal por precisión financiera.
      */
     @Column(name = "saldo", nullable = false, precision = 15, scale = 2)
     private BigDecimal saldo;
@@ -65,20 +65,15 @@ public abstract class CuentaBancaria extends Auditable {
 
     /**
      * Cliente titular de la cuenta bancaria.
-     * Relacion muchos a uno: Muchas cuentas pertenecen a un único cliente.
+     * Relación muchos a uno: Muchas cuentas pertenecen a un único cliente.
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cliente_id", nullable = false)
     private Cliente cliente;
 
     /**
-     * Relacion unidireccional de uno a muchos hacia las transacciones de esta cuenta.
-     *
-     * @JoinColumn: Agrega la clave foranea 'cuenta_id' directamente en la tabla de transacciones.
-     * cascade = CascadeType.ALL: Cualquier operacion de persistencia se extiende a las transacciones.
-     * orphanRemoval = true: Si una transaccion se elimina de esta lista, se borra de la BD automaticamente.
-     */
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "cuenta_id", nullable = false)
+     * Relación bidireccional de uno a muchos hacia las transacciones de esta cuenta.
+     * */
+    @OneToMany(mappedBy = "cuenta", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Transaccion> transacciones = new ArrayList<>();
 }

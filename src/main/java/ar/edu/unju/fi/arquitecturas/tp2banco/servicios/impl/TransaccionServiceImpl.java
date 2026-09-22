@@ -43,7 +43,7 @@ public class TransaccionServiceImpl implements TransaccionService {
         cuenta.setSaldo(cuenta.getSaldo().add(monto));
         cuentaRepository.save(cuenta);
 
-        return guardarTransaccion(TipoTransaccion.DEPOSITO, monto);
+        return guardarTransaccion(cuenta, TipoTransaccion.DEPOSITO, monto);
     }
 
     @Override
@@ -59,7 +59,7 @@ public class TransaccionServiceImpl implements TransaccionService {
         cuenta.setSaldo(cuenta.getSaldo().subtract(monto));
         cuentaRepository.save(cuenta);
 
-        return guardarTransaccion(TipoTransaccion.EXTRACCION, monto);
+        return guardarTransaccion(cuenta, TipoTransaccion.EXTRACCION, monto);
     }
 
     @Override
@@ -73,14 +73,14 @@ public class TransaccionServiceImpl implements TransaccionService {
     @Transactional(readOnly = true)
     public List<Transaccion> obtenerHistorialCuenta(UUID cuentaId) {
         validarExistenciaCuenta(cuentaId);
-        return transaccionRepository.findByCuentaOrigenIdOrderByFechaCreacionDesc(cuentaId);
+        return transaccionRepository.findByCuentaIdOrderByFechaCreacionDesc(cuentaId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Transaccion> obtenerHistorialCuentaPorFechas(UUID cuentaId, LocalDateTime inicio, LocalDateTime fin) {
         validarExistenciaCuenta(cuentaId);
-        return transaccionRepository.findByCuentaOrigenIdAndFechaCreacionBetween(cuentaId, inicio, fin);
+        return transaccionRepository.findByCuentaIdAndFechaCreacionBetween(cuentaId, inicio, fin);
     }
 
     @Override
@@ -91,8 +91,9 @@ public class TransaccionServiceImpl implements TransaccionService {
 
     // --- Métodos Auxiliares ---
 
-    private Transaccion guardarTransaccion(TipoTransaccion tipo, BigDecimal monto) {
+    private Transaccion guardarTransaccion(CuentaBancaria cuenta, TipoTransaccion tipo, BigDecimal monto) {
         Transaccion t = new Transaccion();
+        t.setCuenta(cuenta); // Se asigna la cuenta obligatoria (@JoinColumn nullable = false)
         t.setTipo(tipo);
         t.setMonto(monto);
         t.setFecha(LocalDate.now());

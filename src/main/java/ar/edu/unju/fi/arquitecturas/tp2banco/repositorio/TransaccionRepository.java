@@ -32,16 +32,16 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, UUID> 
     /**
      * Obtiene el historial completo de transacciones asociadas a una cuenta bancaria específica.
      */
-    List<Transaccion> findByCuentaOrigenId(UUID cuentaId);
+    List<Transaccion> findByCuentaId(UUID cuentaId);
 
     /**
      * Obtiene las transacciones de una cuenta filtradas por un rango de fechas determinado.
      */
-    List<Transaccion> findByCuentaOrigenIdAndFechaCreacionBetween(UUID cuentaId, LocalDateTime inicio, LocalDateTime fin);
+    List<Transaccion> findByCuentaIdAndFechaCreacionBetween(UUID cuentaId, LocalDateTime inicio, LocalDateTime fin);
 
     /**
      * Obtiene los últimos movimientos de una cuenta bancaria ordenados descendentemente por fecha.
      */
-    List<Transaccion> findByCuentaOrigenIdOrderByFechaCreacionDesc(UUID cuentaId);
+    List<Transaccion> findByCuentaIdOrderByFechaCreacionDesc(UUID cuentaId);
 
 }
