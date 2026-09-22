@@ -14,7 +14,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
 
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -46,7 +45,7 @@ public class Transaccion extends Auditable {
     private LocalTime hora;
 
     /**
-     * Monto de la transaccion.
+     * Monto de la transacción.
      */
     @Column(name = "monto", nullable = false, precision = 15, scale = 2)
     private BigDecimal monto;
@@ -64,4 +63,12 @@ public class Transaccion extends Auditable {
     @Enumerated(EnumType.STRING)
     @Column(name = "estado_procesamiento", nullable = false, length = 30)
     private EstadoProcesamiento estadoProcesamiento;
+
+    /**
+     * Cuenta bancaria a la que pertenece esta transacción.
+     * Relación Muchos a Uno: Muchas transacciones pertenecen a una única cuenta.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cuenta_id", nullable = false)
+    private CuentaBancaria cuenta;
 }

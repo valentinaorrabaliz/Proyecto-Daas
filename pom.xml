@@ -2,18 +2,23 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
+    <!-- Configuración del Parent de Spring Boot -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>4.1.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
+
+    <!-- Datos del Proyecto -->
     <groupId>ar.edu.unju.fi.arquitecturas</groupId>
     <artifactId>tp2-banco</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>tp2-banco</name>
     <description>tp2-banco</description>
     <url/>
+
     <licenses>
         <license/>
     </licenses>
@@ -26,59 +31,70 @@
         <tag/>
         <url/>
     </scm>
+
+    <!-- Propiedades del Proyecto -->
     <properties>
         <java.version>25</java.version>
     </properties>
-    <dependencies>
-        <!-- Web MVC -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webmvc</artifactId>
-        </dependency>
 
-        <!-- Spring Data JPA (Faltaba esta dependencia para que reconozca @Entity, @Id, JpaRepository, etc.) -->
+    <!-- Dependencias del Proyecto -->
+    <dependencies>
+        <!-- Spring Data JPA para persistencia, ORM y repositorios -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
-        <!-- Driver de MySQL -->
+        <!-- Spring Web MVC para controladores y arquitectura Web -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
+        </dependency>
+
+        <!-- Driver de conexión para la base de datos MySQL -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Lombok -->
+        <!-- Lombok para generación automática de getters, setters, builders, etc. -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
 
-        <!-- Dependencias de Test -->
+        <!-- Starter de Testing para Spring Data JPA -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa-test</artifactId>
             <scope>test</scope>
         </dependency>
 
+        <!-- Starter de Testing para controladores y MVC -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <!-- Configuración de Build y Plugins -->
     <build>
         <plugins>
+            <!-- Plugin de Spring Boot para empaquetar y ejecutar la aplicación -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+
+            <!-- Plugin del Compilador configurado para procesar anotaciones de Lombok -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <executions>
+                    <!-- Procesamiento de anotaciones en fase de compilación principal -->
                     <execution>
                         <id>default-compile</id>
                         <phase>compile</phase>
@@ -94,6 +110,8 @@
                             </annotationProcessorPaths>
                         </configuration>
                     </execution>
+
+                    <!-- Procesamiento de anotaciones en fase de compilación de pruebas -->
                     <execution>
                         <id>default-testCompile</id>
                         <phase>test-compile</phase>
