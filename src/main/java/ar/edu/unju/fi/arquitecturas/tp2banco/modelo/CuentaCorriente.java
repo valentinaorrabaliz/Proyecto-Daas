@@ -1,5 +1,6 @@
 package ar.edu.unju.fi.arquitecturas.tp2banco.modelo;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -8,19 +9,26 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-//lombok
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
-@SuperBuilder // Permite construir esta clase usando también los atributos que hereda del padre (cuenta bancaria)
+import java.math.BigDecimal;
 
-//anotaciones JPA para la tabla en mysql
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
-@Table(name = "cuenta_corriente")
+@Table(name = "cuentas_corrientes")
+public class CuentaCorriente extends CuentaBancaria {
 
-public class CuentaCorriente extends CuentaBancaria{
+    /**
+     * Margen asignado a la cuenta corriente.
+     */
+    @Column(name = "margen", nullable = false, precision = 15, scale = 2)
+    private BigDecimal margen;
 
-    private Float margen;
-    private Float costo;
-
-
-
+    /**
+     * Comision asociada a la cuenta corriente.
+     */
+    @Column(name = "costo", nullable = false, precision = 15, scale = 2)
+    private BigDecimal costo;
 }

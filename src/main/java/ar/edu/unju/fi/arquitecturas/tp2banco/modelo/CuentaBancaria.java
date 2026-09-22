@@ -7,52 +7,78 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
-//lombok
+/**
+ * Clase base abstracta para todas las cuentas bancarias del sistema.
+ *
+ * Implementa estrategia JOINED para herencia en JPA y mantiene una relacion
+ * unidireccional `@OneToMany` hacia la entidad Transaccion con borrado en cascada (orphanRemoval).
+ */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@SuperBuilder //permite que las clases hijas (CajaDeAhorro, CuentaCorriente) hereden el builder
-
-//anotaciones JPA para la tabla en mysql
+@SuperBuilder
 @Entity
-@Table(name = "cuenta_Bancaria")
-
-// lindica a JPA cómo mapear la herencia en la base de datos (JOINED crea una tabla para la clase padre y una para cada clase hija)
+@Table(name = "cuentas_bancarias")
 @Inheritance(strategy = InheritanceType.JOINED)
+public abstract class CuentaBancaria extends Auditable {
 
+    /**
+     * Identificador unico global para la cuenta bancaria utilizando UUID.
+     */
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
+    private UUID id;
 
-@EntityListeners(AuditingEntityListener.class) // <--- Registra eventos de creación/modificación
+    /**
+     * CBU de la cuenta en Argentina.
+     * Numero unico de 22 digitos.
+     */
+    @Column(name = "cbu", nullable = false, unique = true, length = 22)
+    private String cbu;
 
-public abstract class CuentaBancaria {
-
-
-    @Id //clave primaria de la tabla en la BD
-    @GeneratedValue(strategy = GenerationType.IDENTITY) //MySQL genera el ID automáticamente de forma incremental
-    private Long id;
-
-
-    private Long cbu;
+    /**
+     * Alias asignado a la cuenta bancaria.
+     */
+    @Column(name = "alias", nullable = false, unique = true, length = 40)
     private String alias;
-    private Float saldo;
 
+    /**
+     * Saldo actual en la cuenta. Se utiliza BigDecimal por precision financiera.
+     */
+    @Column(name = "saldo", nullable = false, precision = 15, scale = 2)
+    private BigDecimal saldo;
+
+    /**
+     * Estado operativo de la cuenta bancaria.
+     */
     @Enumerated(EnumType.STRING)
+    @Column(name = "estado", nullable = false, length = 20)
     private EstadoCuenta estado;
 
+    /**
+     * Cliente titular de la cuenta bancaria.
+     * Relacion muchos a uno: Muchas cuentas pertenecen a un único cliente.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cliente_id", nullable = false)
+    private Cliente cliente;
 
-    //CAMPOS DE AUDITORÍA
-    @CreatedDate
-    @Column(name = "fecha_creacion", nullable = false, updatable = false)
-    private LocalDateTime fechaCreacion; //se registra automáticamente al insertar
-
-    @LastModifiedDate
-    @Column(name = "fecha_modificacion")
-    private LocalDateTime fechaModificacion;
-    //se actualiza automáticamente al modificar
-    }
+    /**
+     * Relacion unidireccional de uno a muchos hacia las transacciones de esta cuenta.
+     *
+     * @JoinColumn: Agrega la clave foranea 'cuenta_id' directamente en la tabla de transacciones.
+     * cascade = CascadeType.ALL: Cualquier operacion de persistencia se extiende a las transacciones.
+     * orphanRemoval = true: Si una transaccion se elimina de esta lista, se borra de la BD automaticamente.
+     */
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "cuenta_id", nullable = false)
+    private List<Transaccion> transacciones = new ArrayList<>();
+}

@@ -1,64 +1,67 @@
 package ar.edu.unju.fi.arquitecturas.tp2banco.modelo;
 
-
 import ar.edu.unju.fi.arquitecturas.tp2banco.enums.EstadoProcesamiento;
 import ar.edu.unju.fi.arquitecturas.tp2banco.enums.TipoTransaccion;
 import jakarta.persistence.*;
-import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.UUID;
 
-//lombok
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
-@Builder // Crea un constructor fluido para instanciar el objeto campo por campo. Se usa en clases simples sin herencia.
 
-//anotaciones JPA para la tabla en mysql
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
-@Table(name = "transaccion")
+@Table(name = "transacciones")
+public class Transaccion extends Auditable {
 
+    /**
+     * Identificador único global de la transacción en formato UUID.
+     * Evita identificadores secuenciales vulnerables a enumeración.
+     */
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
+    private UUID id;
 
-@EntityListeners(AuditingEntityListener.class) // <--- Registra eventos de creación/modificación
-
-
-public class Transaccion {
-
-    @Id // Indica que 'id' es la clave primaria de la tabla en la BD
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Hace que MySQL genere el ID automáticamente de forma incremental
-    private Integer id;
-
-
-    @Temporal(TemporalType.DATE)
+    /**
+     * Fecha en la que se realizó la transacción.
+     */
+    @Column(name = "fecha", nullable = false)
     private LocalDate fecha;
 
-    @Temporal(TemporalType.TIME)
+    /**
+     * Hora en la que se registró la transacción.
+     */
+    @Column(name = "hora", nullable = false)
     private LocalTime hora;
 
-    private Float monto;
+    /**
+     * Monto de la transaccion.
+     */
+    @Column(name = "monto", nullable = false, precision = 15, scale = 2)
+    private BigDecimal monto;
 
-
-
+    /**
+     * Tipo o categoría de la transacción.
+     */
     @Enumerated(EnumType.STRING)
+    @Column(name = "tipo", nullable = false, length = 30)
     private TipoTransaccion tipo;
 
+    /**
+     * Estado del procesamiento de la transacción.
+     */
     @Enumerated(EnumType.STRING)
+    @Column(name = "estado_procesamiento", nullable = false, length = 30)
     private EstadoProcesamiento estadoProcesamiento;
-
-
-    // --- CAMPOS DE AUDITORÍA ---
-    @CreatedDate
-    @Column(name = "fecha_creacion", nullable = false, updatable = false)
-    private LocalDateTime fechaCreacion; // Se registra automáticamente al insertar
-
-    @LastModifiedDate
-    @Column(name = "fecha_modificacion")
-    private LocalDateTime fechaModificacion; // Se actualiza automáticamente al modificar
-
-
-
-
 }
