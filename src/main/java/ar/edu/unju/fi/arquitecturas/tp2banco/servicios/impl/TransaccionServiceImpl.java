@@ -1,7 +1,9 @@
 package ar.edu.unju.fi.arquitecturas.tp2banco.servicios.impl;
 
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.TransaccionRequestDto;
+import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.TransferenciaRequestDto;
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.response.TransaccionResponseDto;
+import ar.edu.unju.fi.arquitecturas.tp2banco.dto.response.TransferenciaResponseDto;
 import ar.edu.unju.fi.arquitecturas.tp2banco.enums.EstadoCuenta;
 import ar.edu.unju.fi.arquitecturas.tp2banco.enums.EstadoProcesamiento;
 import ar.edu.unju.fi.arquitecturas.tp2banco.enums.TipoTransaccion;
@@ -64,6 +66,54 @@ public class TransaccionServiceImpl implements TransaccionService {
 
         Transaccion t = guardarTransaccion(cuenta, TipoTransaccion.EXTRACCION, transaccionRequest.getMonto());
         return mapToResponseDto(t);
+    }
+
+    @Override
+    @Transactional
+    public TransferenciaResponseDto realizarTransferencia(TransferenciaRequestDto dto) {
+        validarMonto(dto.getMonto());
+
+        if (dto.getCbuOrigen().equalsIgnoreCase(dto.getCbuDestino())) {
+            throw new OperacionNoPermitidaException("No se puede realizar una transferencia al mismo CBU de origen.");
+        }
+
+        CuentaBancaria cuentaOrigen = cuentaRepository.findByCbu(dto.getCbuOrigen())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Cuenta de origen no encontrada con CBU: " + dto.getCbuOrigen()));
+
+        CuentaBancaria cuentaDestino = cuentaRepository.findByCbu(dto.getCbuDestino())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Cuenta de destino no encontrada con CBU: " + dto.getCbuDestino()));
+
+        if (cuentaOrigen.getEstado() != EstadoCuenta.ACTIVA) {
+            throw new OperacionNoPermitidaException("La cuenta de origen no está ACTIVA.");
+        }
+        if (cuentaDestino.getEstado() != EstadoCuenta.ACTIVA) {
+            throw new OperacionNoPermitidaException("La cuenta de destino no está ACTIVA.");
+        }
+
+        if (cuentaOrigen.getSaldo().compareTo(dto.getMonto()) < 0) {
+            throw new SaldoInsuficienteException("Saldo insuficiente. Saldo disponible: " + cuentaOrigen.getSaldo());
+        }
+
+        // Modificación de saldos
+        cuentaOrigen.setSaldo(cuentaOrigen.getSaldo().subtract(dto.getMonto()));
+        cuentaDestino.setSaldo(cuentaDestino.getSaldo().add(dto.getMonto()));
+
+        cuentaRepository.save(cuentaOrigen);
+        cuentaRepository.save(cuentaDestino);
+
+        // Registro de ambas transacciones para el historial de cada cuenta
+        Transaccion transaccionOrigen = guardarTransaccion(cuentaOrigen, TipoTransaccion.TRANSFERENCIA_ENVIADA, dto.getMonto());
+        guardarTransaccion(cuentaDestino, TipoTransaccion.TRANSFERENCIA_RECIBIDA, dto.getMonto());
+
+        return TransferenciaResponseDto.builder()
+                .idTransaccion(transaccionOrigen.getId())
+                .cbuOrigen(dto.getCbuOrigen())
+                .cbuDestino(dto.getCbuDestino())
+                .monto(dto.getMonto())
+                .fechaHora(LocalDateTime.of(transaccionOrigen.getFecha(), transaccionOrigen.getHora()))
+                .estado(EstadoProcesamiento.COMPLETADA)
+                .mensaje("Transferencia realizada con éxito.")
+                .build();
     }
 
     @Override
