@@ -1,5 +1,7 @@
 package ar.edu.unju.fi.arquitecturas.tp2banco.servicios.impl;
 
+import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.TransaccionRequestDto;
+import ar.edu.unju.fi.arquitecturas.tp2banco.dto.response.TransaccionResponseDto;
 import ar.edu.unju.fi.arquitecturas.tp2banco.enums.EstadoCuenta;
 import ar.edu.unju.fi.arquitecturas.tp2banco.enums.EstadoProcesamiento;
 import ar.edu.unju.fi.arquitecturas.tp2banco.enums.TipoTransaccion;
@@ -36,64 +38,74 @@ public class TransaccionServiceImpl implements TransaccionService {
 
     @Override
     @Transactional
-    public Transaccion realizarDeposito(UUID cuentaId, BigDecimal monto, String descripcion) {
-        validarMonto(monto);
-        CuentaBancaria cuenta = obtenerCuentaActiva(cuentaId);
+    public TransaccionResponseDto realizarDeposito(TransaccionRequestDto transaccionRequest) {
+        validarMonto(transaccionRequest.getMonto());
+        CuentaBancaria cuenta = obtenerCuentaActiva(transaccionRequest.getCuentaId());
 
-        cuenta.setSaldo(cuenta.getSaldo().add(monto));
+        cuenta.setSaldo(cuenta.getSaldo().add(transaccionRequest.getMonto()));
         cuentaRepository.save(cuenta);
 
-        return guardarTransaccion(cuenta, TipoTransaccion.DEPOSITO, monto);
+        Transaccion t = guardarTransaccion(cuenta, TipoTransaccion.DEPOSITO, transaccionRequest.getMonto());
+        return mapToResponseDto(t);
     }
 
     @Override
     @Transactional
-    public Transaccion realizarExtraccion(UUID cuentaId, BigDecimal monto, String descripcion) {
-        validarMonto(monto);
-        CuentaBancaria cuenta = obtenerCuentaActiva(cuentaId);
+    public TransaccionResponseDto realizarExtraccion(TransaccionRequestDto transaccionRequest) {
+        validarMonto(transaccionRequest.getMonto());
+        CuentaBancaria cuenta = obtenerCuentaActiva(transaccionRequest.getCuentaId());
 
-        if (cuenta.getSaldo().compareTo(monto) < 0) {
+        if (cuenta.getSaldo().compareTo(transaccionRequest.getMonto()) < 0) {
             throw new SaldoInsuficienteException("Saldo insuficiente. Saldo actual: " + cuenta.getSaldo());
         }
 
-        cuenta.setSaldo(cuenta.getSaldo().subtract(monto));
+        cuenta.setSaldo(cuenta.getSaldo().subtract(transaccionRequest.getMonto()));
         cuentaRepository.save(cuenta);
 
-        return guardarTransaccion(cuenta, TipoTransaccion.EXTRACCION, monto);
+        Transaccion t = guardarTransaccion(cuenta, TipoTransaccion.EXTRACCION, transaccionRequest.getMonto());
+        return mapToResponseDto(t);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Transaccion obtenerPorId(UUID id) {
-        return transaccionRepository.findById(id)
+    public TransaccionResponseDto obtenerPorId(UUID id) {
+        Transaccion t = transaccionRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Transacción no encontrada con ID: " + id));
+        return mapToResponseDto(t);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Transaccion> obtenerHistorialCuenta(UUID cuentaId) {
+    public List<TransaccionResponseDto> obtenerHistorialCuenta(UUID cuentaId) {
         validarExistenciaCuenta(cuentaId);
-        return transaccionRepository.findByCuentaIdOrderByFechaCreacionDesc(cuentaId);
+        return transaccionRepository.findByCuentaIdOrderByFechaCreacionDesc(cuentaId)
+                .stream()
+                .map(this::mapToResponseDto)
+                .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Transaccion> obtenerHistorialCuentaPorFechas(UUID cuentaId, LocalDateTime inicio, LocalDateTime fin) {
+    public List<TransaccionResponseDto> obtenerHistorialCuentaPorFechas(UUID cuentaId, LocalDateTime inicio, LocalDateTime fin) {
         validarExistenciaCuenta(cuentaId);
-        return transaccionRepository.findByCuentaIdAndFechaCreacionBetween(cuentaId, inicio, fin);
+        return transaccionRepository.findByCuentaIdAndFechaCreacionBetween(cuentaId, inicio, fin)
+                .stream()
+                .map(this::mapToResponseDto)
+                .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Transaccion> listarPorTipo(TipoTransaccion tipo, Pageable pageable) {
-        return transaccionRepository.findByTipo(tipo, pageable);
+    public Page<TransaccionResponseDto> listarPorTipo(TipoTransaccion tipo, Pageable pageable) {
+        return transaccionRepository.findByTipo(tipo, pageable)
+                .map(this::mapToResponseDto);
     }
 
     // --- Métodos Auxiliares ---
 
     private Transaccion guardarTransaccion(CuentaBancaria cuenta, TipoTransaccion tipo, BigDecimal monto) {
         Transaccion t = new Transaccion();
-        t.setCuenta(cuenta); // Se asigna la cuenta obligatoria (@JoinColumn nullable = false)
+        t.setCuenta(cuenta);
         t.setTipo(tipo);
         t.setMonto(monto);
         t.setFecha(LocalDate.now());
@@ -122,5 +134,17 @@ public class TransaccionServiceImpl implements TransaccionService {
             throw new OperacionNoPermitidaException("La cuenta no está ACTIVA.");
         }
         return cuenta;
+    }
+
+    private TransaccionResponseDto mapToResponseDto(Transaccion t) {
+        return TransaccionResponseDto.builder()
+                .id(t.getId())
+                .monto(t.getMonto())
+                .tipo(t.getTipo())
+                .fecha(t.getFecha())
+                .hora(t.getHora())
+                .estadoProcesamiento(t.getEstadoProcesamiento())
+                .cuentaId(t.getCuenta() != null ? t.getCuenta().getId() : null)
+                .build();
     }
 }

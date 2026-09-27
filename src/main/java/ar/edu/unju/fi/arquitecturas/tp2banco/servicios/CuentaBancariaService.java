@@ -1,7 +1,8 @@
 package ar.edu.unju.fi.arquitecturas.tp2banco.servicios;
 
+import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.CuentaBancariaRequestDto;
+import ar.edu.unju.fi.arquitecturas.tp2banco.dto.response.CuentaBancariaResponseDto;
 import ar.edu.unju.fi.arquitecturas.tp2banco.enums.EstadoCuenta;
-import ar.edu.unju.fi.arquitecturas.tp2banco.modelo.CuentaBancaria;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -13,15 +14,15 @@ import java.util.UUID;
  */
 public interface CuentaBancariaService {
 
-    CuentaBancaria crearCuenta(CuentaBancaria cuenta, UUID clienteId);
+    CuentaBancariaResponseDto crearCuenta(CuentaBancariaRequestDto cuentaRequest);
 
-    CuentaBancaria obtenerPorId(UUID id);
+    CuentaBancariaResponseDto obtenerPorId(UUID id);
 
-    CuentaBancaria obtenerPorCbu(String cbu);
+    CuentaBancariaResponseDto obtenerPorCbu(String cbu);
 
-    List<CuentaBancaria> obtenerCuentasPorCliente(UUID clienteId);
+    List<CuentaBancariaResponseDto> obtenerCuentasPorCliente(UUID clienteId);
 
-    Page<CuentaBancaria> listarPorEstado(EstadoCuenta estado, Pageable pageable);
+    Page<CuentaBancariaResponseDto> listarPorEstado(EstadoCuenta estado, Pageable pageable);
 
-    CuentaBancaria cambiarEstadoCuenta(UUID id, EstadoCuenta nuevoEstado);
+    CuentaBancariaResponseDto cambiarEstadoCuenta(UUID id, EstadoCuenta nuevoEstado);
 }

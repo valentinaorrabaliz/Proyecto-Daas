@@ -1,5 +1,7 @@
 package ar.edu.unju.fi.arquitecturas.tp2banco.servicios.impl;
 
+import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.ClienteRequestDto;
+import ar.edu.unju.fi.arquitecturas.tp2banco.dto.response.ClienteResponseDto;
 import ar.edu.unju.fi.arquitecturas.tp2banco.excepcion.RecursoDuplicadoException;
 import ar.edu.unju.fi.arquitecturas.tp2banco.excepcion.RecursoNoEncontradoException;
 import ar.edu.unju.fi.arquitecturas.tp2banco.modelo.Cliente;
@@ -18,57 +20,68 @@ public class ClienteServiceImpl implements ClienteService {
 
     private final ClienteRepository clienteRepository;
 
-    // Inyección de dependencias por constructor (Buena práctica)
     public ClienteServiceImpl(ClienteRepository clienteRepository) {
         this.clienteRepository = clienteRepository;
     }
 
     @Override
     @Transactional
-    public Cliente crearCliente(Cliente cliente) {
-        // Validación con existsByCuilOrEmail para evitar duplicados
-        if (clienteRepository.existsByCuil(cliente.getCuil())) {
-            throw new RecursoDuplicadoException("Ya existe un cliente registrado con el CUIL: " + cliente.getCuil());
+    public ClienteResponseDto crearCliente(ClienteRequestDto clienteRequest) {
+        if (clienteRepository.existsByCuil(clienteRequest.getCuil())) {
+            throw new RecursoDuplicadoException("Ya existe un cliente registrado con el CUIL: " + clienteRequest.getCuil());
         }
-        if (clienteRepository.existsByEmail(cliente.getEmail())) {
-            throw new RecursoDuplicadoException("Ya existe un cliente registrado con el Email: " + cliente.getEmail());
+        if (clienteRepository.existsByEmail(clienteRequest.getEmail())) {
+            throw new RecursoDuplicadoException("Ya existe un cliente registrado con el Email: " + clienteRequest.getEmail());
         }
-        return clienteRepository.save(cliente);
+
+        Cliente cliente = Cliente.builder()
+                .nombre(clienteRequest.getNombre())
+                .apellido(clienteRequest.getApellido())
+                .dni(clienteRequest.getDni())
+                .cuil(clienteRequest.getCuil())
+                .email(clienteRequest.getEmail())
+                .telefono(clienteRequest.getTelefono())
+                .build();
+
+        return mapToResponseDto(clienteRepository.save(cliente));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Cliente obtenerPorId(UUID id) {
-        return clienteRepository.findById(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException("No se encontró el cliente con ID: " + id));
+    public ClienteResponseDto obtenerPorId(UUID id) {
+        Cliente cliente = buscarClientePorId(id);
+        return mapToResponseDto(cliente);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Cliente obtenerPorCuil(String cuil) {
-        return clienteRepository.findByCuil(cuil)
+    public ClienteResponseDto obtenerPorCuil(String cuil) {
+        Cliente cliente = clienteRepository.findByCuil(cuil)
                 .orElseThrow(() -> new RecursoNoEncontradoException("No se encontró el cliente con CUIL: " + cuil));
-    }
-
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<Cliente> listarTodosPaginado(Pageable pageable) {
-        return clienteRepository.findAll(pageable);
+        return mapToResponseDto(cliente);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Cliente> buscarPorNombreOApellido(String termino) {
-        return clienteRepository.findByNombreContainingIgnoreCaseOrApellidoContainingIgnoreCase(termino, termino);
+    public Page<ClienteResponseDto> listarTodosPaginado(Pageable pageable) {
+        return clienteRepository.findAll(pageable)
+                .map(this::mapToResponseDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ClienteResponseDto> buscarPorNombreOApellido(String termino) {
+        return clienteRepository.findByNombreContainingIgnoreCaseOrApellidoContainingIgnoreCase(termino, termino)
+                .stream()
+                .map(this::mapToResponseDto)
+                .toList();
     }
 
     @Override
     @Transactional
-    public Cliente actualizarCliente(UUID id, Cliente clienteDetalles) {
-        Cliente clienteExistente = obtenerPorId(id);
+    public ClienteResponseDto actualizarCliente(UUID id, ClienteRequestDto clienteDetalles) {
+        Cliente clienteExistente = buscarClientePorId(id);
 
-        // Validar si el nuevo email ya pertenece a otro cliente
         if (!clienteExistente.getEmail().equals(clienteDetalles.getEmail())
                 && clienteRepository.existsByEmail(clienteDetalles.getEmail())) {
             throw new RecursoDuplicadoException("El email " + clienteDetalles.getEmail() + " ya está en uso por otro cliente.");
@@ -76,12 +89,13 @@ public class ClienteServiceImpl implements ClienteService {
 
         clienteExistente.setNombre(clienteDetalles.getNombre());
         clienteExistente.setApellido(clienteDetalles.getApellido());
+        clienteExistente.setDni(clienteDetalles.getDni());
+        clienteExistente.setCuil(clienteDetalles.getCuil());
         clienteExistente.setEmail(clienteDetalles.getEmail());
         clienteExistente.setTelefono(clienteDetalles.getTelefono());
 
-        return clienteRepository.save(clienteExistente);
+        return mapToResponseDto(clienteRepository.save(clienteExistente));
     }
-
 
     @Override
     @Transactional
@@ -90,5 +104,22 @@ public class ClienteServiceImpl implements ClienteService {
             throw new RecursoNoEncontradoException("No se puede eliminar. No existe el cliente con ID: " + id);
         }
         clienteRepository.deleteById(id);
+    }
+
+    private Cliente buscarClientePorId(UUID id) {
+        return clienteRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No se encontró el cliente con ID: " + id));
+    }
+
+    private ClienteResponseDto mapToResponseDto(Cliente cliente) {
+        return ClienteResponseDto.builder()
+                .id(cliente.getId())
+                .nombre(cliente.getNombre())
+                .apellido(cliente.getApellido())
+                .dni(cliente.getDni())
+                .cuil(cliente.getCuil())
+                .email(cliente.getEmail())
+                .telefono(cliente.getTelefono())
+                .build();
     }
 }

@@ -1,9 +1,9 @@
 package ar.edu.unju.fi.arquitecturas.tp2banco.servicios;
 
-import ar.edu.unju.fi.arquitecturas.tp2banco.modelo.Cliente;
+import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.ClienteRequestDto;
+import ar.edu.unju.fi.arquitecturas.tp2banco.dto.response.ClienteResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -11,24 +11,22 @@ import java.util.UUID;
 /**
  * Interfaz que define la lógica de negocio para la gestión de Clientes.
  */
-
 public interface ClienteService {
 
-    Cliente crearCliente(Cliente cliente);
+    ClienteResponseDto crearCliente(ClienteRequestDto clienteRequest);
 
-    Cliente obtenerPorId(UUID id);
+    ClienteResponseDto obtenerPorId(UUID id);
 
-    Cliente obtenerPorCuil(String cuil);
+    ClienteResponseDto obtenerPorCuil(String cuil);
 
     /**
      * Paginación para evitar la carga masiva de datos en memoria RAM.
      */
-    Page<Cliente> listarTodosPaginado(Pageable pageable);
+    Page<ClienteResponseDto> listarTodosPaginado(Pageable pageable);
 
-    List<Cliente> buscarPorNombreOApellido(String termino);
+    List<ClienteResponseDto> buscarPorNombreOApellido(String termino);
 
-    Cliente actualizarCliente(UUID id, Cliente clienteDetalles);
+    ClienteResponseDto actualizarCliente(UUID id, ClienteRequestDto clienteDetalles);
 
-    @Transactional
     void eliminarCliente(UUID id);
 }
