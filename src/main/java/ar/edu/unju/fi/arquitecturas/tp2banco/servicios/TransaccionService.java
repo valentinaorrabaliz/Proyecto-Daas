@@ -1,7 +1,9 @@
 package ar.edu.unju.fi.arquitecturas.tp2banco.servicios;
 
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.TransaccionRequestDto;
+import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.TransferenciaRequestDto;
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.response.TransaccionResponseDto;
+import ar.edu.unju.fi.arquitecturas.tp2banco.dto.response.TransferenciaResponseDto;
 import ar.edu.unju.fi.arquitecturas.tp2banco.enums.TipoTransaccion;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,4 +25,6 @@ public interface TransaccionService {
     List<TransaccionResponseDto> obtenerHistorialCuentaPorFechas(UUID cuentaId, LocalDateTime inicio, LocalDateTime fin);
 
     Page<TransaccionResponseDto> listarPorTipo(TipoTransaccion tipo, Pageable pageable);
+
+    TransferenciaResponseDto realizarTransferencia(TransferenciaRequestDto transferenciaRequest);
 }
