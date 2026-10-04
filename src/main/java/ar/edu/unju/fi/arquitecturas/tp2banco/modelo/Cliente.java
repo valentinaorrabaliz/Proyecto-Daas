@@ -1,5 +1,6 @@
 package ar.edu.unju.fi.arquitecturas.tp2banco.modelo;
 
+import ar.edu.unju.fi.arquitecturas.tp2banco.enums.EstadoCliente;
 import ar.edu.unju.fi.arquitecturas.tp2banco.enums.RolFamiliar;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -82,4 +84,14 @@ public class Cliente extends Auditable {
 
     @OneToMany(mappedBy = "titular", cascade = CascadeType.ALL)
     private List<Cliente> adherentes; // Lista de adherentes vinculados
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_cliente", nullable = false)
+    private EstadoCliente estadoCliente;
+
+    @Column(name = "token_activacion")
+    private String tokenActivacion;
+
+    @Column(name = "fecha_expiracion_token")
+    private LocalDateTime fechaExpiracionToken;
 }

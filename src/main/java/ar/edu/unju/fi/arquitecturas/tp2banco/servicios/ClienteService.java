@@ -32,4 +32,6 @@ public interface ClienteService {
     void eliminarCliente(UUID id);
 
     void vincularAdherente(VincularAdherenteRequestDto request);
+
+    void activarCuenta(String token);
 }

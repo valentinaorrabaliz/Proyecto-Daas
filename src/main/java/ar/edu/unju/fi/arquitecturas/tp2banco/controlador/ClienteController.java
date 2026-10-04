@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -26,6 +27,12 @@ public class ClienteController {
     public ResponseEntity<ClienteResponseDto> crearCliente(@Valid @RequestBody ClienteRequestDto dto) {
         ClienteResponseDto clienteCreado = clienteService.crearCliente(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(clienteCreado);
+    }
+
+    @GetMapping("/activar")
+    public ResponseEntity<Map<String, String>> activarCuenta(@RequestParam String token) {
+        clienteService.activarCuenta(token);
+        return ResponseEntity.ok(Map.of("mensaje", "Cuenta activada exitosamente."));
     }
 
     @PostMapping("/adherentes")

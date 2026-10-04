@@ -66,4 +66,9 @@ public interface ClienteRepository extends JpaRepository<Cliente, UUID> {
      * Busca clientes cuyo nombre O apellido contenga la cadena buscada..
      */
     List<Cliente> findByNombreContainingIgnoreCaseOrApellidoContainingIgnoreCase(String nombre, String apellido);
+
+    /**
+     * Busca un cliente a partir de su token de activación.
+     */
+    Optional<Cliente> findByTokenActivacion(String token);
 }

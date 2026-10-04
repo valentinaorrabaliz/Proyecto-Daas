@@ -3,28 +3,31 @@ package ar.edu.unju.fi.arquitecturas.tp2banco.servicios.impl;
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.ClienteRequestDto;
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.VincularAdherenteRequestDto;
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.response.ClienteResponseDto;
+import ar.edu.unju.fi.arquitecturas.tp2banco.enums.EstadoCliente;
 import ar.edu.unju.fi.arquitecturas.tp2banco.enums.RolFamiliar;
+import ar.edu.unju.fi.arquitecturas.tp2banco.evento.ClienteCreadoEvent;
 import ar.edu.unju.fi.arquitecturas.tp2banco.excepcion.RecursoDuplicadoException;
 import ar.edu.unju.fi.arquitecturas.tp2banco.excepcion.RecursoNoEncontradoException;
 import ar.edu.unju.fi.arquitecturas.tp2banco.modelo.Cliente;
 import ar.edu.unju.fi.arquitecturas.tp2banco.repositorio.ClienteRepository;
 import ar.edu.unju.fi.arquitecturas.tp2banco.servicios.ClienteService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class ClienteServiceImpl implements ClienteService {
 
     private final ClienteRepository clienteRepository;
-
-    public ClienteServiceImpl(ClienteRepository clienteRepository) {
-        this.clienteRepository = clienteRepository;
-    }
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -36,6 +39,8 @@ public class ClienteServiceImpl implements ClienteService {
             throw new RecursoDuplicadoException("Ya existe un cliente registrado con el Email: " + clienteRequest.getEmail());
         }
 
+        String token = UUID.randomUUID().toString();
+
         Cliente cliente = Cliente.builder()
                 .nombre(clienteRequest.getNombre())
                 .apellido(clienteRequest.getApellido())
@@ -43,9 +48,43 @@ public class ClienteServiceImpl implements ClienteService {
                 .cuil(clienteRequest.getCuil())
                 .email(clienteRequest.getEmail())
                 .telefono(clienteRequest.getTelefono())
+                .estadoCliente(EstadoCliente.PENDIENTE_ACTIVACION)
+                .tokenActivacion(token)
+                .fechaExpiracionToken(LocalDateTime.now().plusHours(24))
                 .build();
 
-        return mapToResponseDto(clienteRepository.save(cliente));
+        Cliente clienteGuardado = clienteRepository.save(cliente);
+
+        // Publicar evento para envio asincrono del correo de activacion
+        eventPublisher.publishEvent(new ClienteCreadoEvent(
+                clienteGuardado.getId(),
+                clienteGuardado.getNombre(),
+                clienteGuardado.getEmail(),
+                clienteGuardado.getTokenActivacion()
+        ));
+
+        return mapToResponseDto(clienteGuardado);
+    }
+
+    @Override
+    @Transactional
+    public void activarCuenta(String token) {
+        Cliente cliente = clienteRepository.findByTokenActivacion(token)
+                .orElseThrow(() -> new RecursoNoEncontradoException("El token de activación provisto es inválido."));
+
+        if (cliente.getEstadoCliente() == EstadoCliente.ACTIVO) {
+            throw new IllegalStateException("El token ya fue utilizado. La cuenta ya se encuentra ACTIVA.");
+        }
+
+        if (cliente.getFechaExpiracionToken() != null && cliente.getFechaExpiracionToken().isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("El token de activación ha expirado.");
+        }
+
+        cliente.setEstadoCliente(EstadoCliente.ACTIVO);
+        cliente.setTokenActivacion(null);
+        cliente.setFechaExpiracionToken(null);
+
+        clienteRepository.save(cliente);
     }
 
     @Override
@@ -143,7 +182,6 @@ public class ClienteServiceImpl implements ClienteService {
             throw new IllegalStateException("Un cliente que es adherente no puede ser titular de otro grupo familiar");
         }
 
-        // Asignar rol TITULAR al cliente principal si no lo tiene configurado aún
         if (titular.getRolFamiliar() == null) {
             titular.setRolFamiliar(RolFamiliar.TITULAR);
             clienteRepository.save(titular);
