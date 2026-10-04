@@ -1,6 +1,7 @@
 package ar.edu.unju.fi.arquitecturas.tp2banco.controlador;
 
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.ClienteRequestDto;
+import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.VincularAdherenteRequestDto;
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.response.ClienteResponseDto;
 import ar.edu.unju.fi.arquitecturas.tp2banco.servicios.ClienteService;
 import jakarta.validation.Valid;
@@ -25,6 +26,12 @@ public class ClienteController {
     public ResponseEntity<ClienteResponseDto> crearCliente(@Valid @RequestBody ClienteRequestDto dto) {
         ClienteResponseDto clienteCreado = clienteService.crearCliente(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(clienteCreado);
+    }
+
+    @PostMapping("/adherentes")
+    public ResponseEntity<Void> vincularAdherente(@Valid @RequestBody VincularAdherenteRequestDto request) {
+        clienteService.vincularAdherente(request);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{id}")
