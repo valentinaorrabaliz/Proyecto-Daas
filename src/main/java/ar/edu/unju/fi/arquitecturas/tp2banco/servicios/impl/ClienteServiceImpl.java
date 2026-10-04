@@ -1,7 +1,9 @@
 package ar.edu.unju.fi.arquitecturas.tp2banco.servicios.impl;
 
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.ClienteRequestDto;
+import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.VincularAdherenteRequestDto;
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.response.ClienteResponseDto;
+import ar.edu.unju.fi.arquitecturas.tp2banco.enums.RolFamiliar;
 import ar.edu.unju.fi.arquitecturas.tp2banco.excepcion.RecursoDuplicadoException;
 import ar.edu.unju.fi.arquitecturas.tp2banco.excepcion.RecursoNoEncontradoException;
 import ar.edu.unju.fi.arquitecturas.tp2banco.modelo.Cliente;
@@ -121,5 +123,34 @@ public class ClienteServiceImpl implements ClienteService {
                 .email(cliente.getEmail())
                 .telefono(cliente.getTelefono())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void vincularAdherente(VincularAdherenteRequestDto request) {
+        if (request.getRolFamiliar() == RolFamiliar.TITULAR) {
+            throw new IllegalArgumentException("No se puede vincular un adherente con el rol TITULAR");
+        }
+
+        Cliente titular = buscarClientePorId(request.getTitularId());
+        Cliente adherente = buscarClientePorId(request.getAdherenteId());
+
+        if (adherente.getTitular() != null) {
+            throw new IllegalStateException("El cliente ingresado como adherente ya pertenece a un grupo familiar");
+        }
+
+        if (titular.getTitular() != null) {
+            throw new IllegalStateException("Un cliente que es adherente no puede ser titular de otro grupo familiar");
+        }
+
+        // Asignar rol TITULAR al cliente principal si no lo tiene configurado aún
+        if (titular.getRolFamiliar() == null) {
+            titular.setRolFamiliar(RolFamiliar.TITULAR);
+            clienteRepository.save(titular);
+        }
+
+        adherente.setTitular(titular);
+        adherente.setRolFamiliar(request.getRolFamiliar());
+        clienteRepository.save(adherente);
     }
 }

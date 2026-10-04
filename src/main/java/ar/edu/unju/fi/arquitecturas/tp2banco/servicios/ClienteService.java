@@ -1,6 +1,7 @@
 package ar.edu.unju.fi.arquitecturas.tp2banco.servicios;
 
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.ClienteRequestDto;
+import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.VincularAdherenteRequestDto;
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.response.ClienteResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,4 +30,6 @@ public interface ClienteService {
     ClienteResponseDto actualizarCliente(UUID id, ClienteRequestDto clienteDetalles);
 
     void eliminarCliente(UUID id);
+
+    void vincularAdherente(VincularAdherenteRequestDto request);
 }
