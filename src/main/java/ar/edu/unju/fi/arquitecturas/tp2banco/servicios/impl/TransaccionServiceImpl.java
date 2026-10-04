@@ -1,5 +1,7 @@
 package ar.edu.unju.fi.arquitecturas.tp2banco.servicios.impl;
 
+import ar.edu.unju.fi.arquitecturas.tp2banco.modelo.Cliente;
+import ar.edu.unju.fi.arquitecturas.tp2banco.repositorio.ConfiguracionParametroRepository;
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.TransaccionRequestDto;
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.TransferenciaRequestDto;
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.response.TransaccionResponseDto;
@@ -32,10 +34,12 @@ public class TransaccionServiceImpl implements TransaccionService {
 
     private final TransaccionRepository transaccionRepository;
     private final CuentaBancariaRepository cuentaRepository;
+    private final ConfiguracionParametroRepository parametroRepository;
 
-    public TransaccionServiceImpl(TransaccionRepository transaccionRepository, CuentaBancariaRepository cuentaRepository) {
+    public TransaccionServiceImpl(TransaccionRepository transaccionRepository, CuentaBancariaRepository cuentaRepository, ConfiguracionParametroRepository parametroRepository) {
         this.transaccionRepository = transaccionRepository;
         this.cuentaRepository = cuentaRepository;
+        this.parametroRepository = parametroRepository;
     }
 
     @Override
@@ -56,11 +60,37 @@ public class TransaccionServiceImpl implements TransaccionService {
     public TransaccionResponseDto realizarExtraccion(TransaccionRequestDto transaccionRequest) {
         validarMonto(transaccionRequest.getMonto());
         CuentaBancaria cuenta = obtenerCuentaActiva(transaccionRequest.getCuentaId());
+        Cliente cliente = cuenta.getCliente();
 
+        // 1. Determinar si pertenece a grupo familiar (Titular con adherentes o Adherente)
+        boolean esGrupoFamiliar = (cliente.getTitular() != null) ||
+                (cliente.getAdherentes() != null && !cliente.getAdherentes().isEmpty());
+
+        String claveTope = esGrupoFamiliar ? "TOPE_DIARIO_GRUPO_FAMILIAR" : "TOPE_DIARIO_INDIVIDUAL";
+        BigDecimal topePorDefecto = esGrupoFamiliar ? new BigDecimal("70000.00") : new BigDecimal("100000.00");
+
+        BigDecimal topeDiario = parametroRepository.findById(claveTope)
+                .map(p -> new BigDecimal(p.getValor()))
+                .orElse(topePorDefecto);
+
+        // 2. Controlar la suma acumulada de extracciones del día
+        BigDecimal extraidoHoy = transaccionRepository.sumarExtraccionesDelDia(cuenta.getId());
+        BigDecimal totalConEstaExtraccion = extraidoHoy.add(transaccionRequest.getMonto());
+
+        if (totalConEstaExtraccion.compareTo(topeDiario) > 0) {
+            throw new OperacionNoPermitidaException(
+                    "Límite diario de extracción superado. Tope máximo: $" + topeDiario +
+                            ", Extraído hoy: $" + extraidoHoy +
+                            ", Intento actual: $" + transaccionRequest.getMonto()
+            );
+        }
+
+        // 3. Validar saldo suficiente
         if (cuenta.getSaldo().compareTo(transaccionRequest.getMonto()) < 0) {
             throw new SaldoInsuficienteException("Saldo insuficiente. Saldo actual: " + cuenta.getSaldo());
         }
 
+        // 4. Efectuar débito y registrar transacción
         cuenta.setSaldo(cuenta.getSaldo().subtract(transaccionRequest.getMonto()));
         cuentaRepository.save(cuenta);
 

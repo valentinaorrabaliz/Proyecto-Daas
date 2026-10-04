@@ -5,8 +5,11 @@ import ar.edu.unju.fi.arquitecturas.tp2banco.modelo.Transaccion;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -18,6 +21,15 @@ import java.util.UUID;
  */
 @Repository
 public interface TransaccionRepository extends JpaRepository<Transaccion, UUID> {
+
+    /**
+     * Suma el monto total de las extracciones realizadas en el día actual para una cuenta específica.
+     */
+    @Query("SELECT COALESCE(SUM(t.monto), 0) FROM Transaccion t " +
+            "WHERE t.cuenta.id = :cuentaId " +
+            "AND t.tipo = ar.edu.unju.fi.arquitecturas.tp2banco.enums.TipoTransaccion.EXTRACCION " +
+            "AND t.fecha = CURRENT_DATE")
+    BigDecimal sumarExtraccionesDelDia(@Param("cuentaId") UUID cuentaId);
 
     /**
      * Busca todas las transacciones filtradas por su tipo de forma paginada.
