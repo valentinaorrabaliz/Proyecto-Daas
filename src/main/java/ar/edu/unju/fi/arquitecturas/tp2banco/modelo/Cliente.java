@@ -1,5 +1,6 @@
 package ar.edu.unju.fi.arquitecturas.tp2banco.modelo;
 
+import ar.edu.unju.fi.arquitecturas.tp2banco.enums.RolFamiliar;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -7,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -68,4 +70,16 @@ public class Cliente extends Auditable {
      */
     @Column(name = "telefono", nullable = false, length = 20)
     private String telefono;
+
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "rol_familiar")
+    private RolFamiliar rolFamiliar;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "titular_id")
+    private Cliente titular; // Nulo si este cliente es el Titular
+
+    @OneToMany(mappedBy = "titular", cascade = CascadeType.ALL)
+    private List<Cliente> adherentes; // Lista de adherentes vinculados
 }
