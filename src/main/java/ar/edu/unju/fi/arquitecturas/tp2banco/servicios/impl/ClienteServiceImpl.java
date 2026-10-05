@@ -6,6 +6,7 @@ import ar.edu.unju.fi.arquitecturas.tp2banco.dto.response.ClienteResponseDto;
 import ar.edu.unju.fi.arquitecturas.tp2banco.enums.EstadoCliente;
 import ar.edu.unju.fi.arquitecturas.tp2banco.enums.RolFamiliar;
 import ar.edu.unju.fi.arquitecturas.tp2banco.evento.ClienteCreadoEvent;
+import ar.edu.unju.fi.arquitecturas.tp2banco.excepcion.OperacionNoPermitidaException;
 import ar.edu.unju.fi.arquitecturas.tp2banco.excepcion.RecursoDuplicadoException;
 import ar.edu.unju.fi.arquitecturas.tp2banco.excepcion.RecursoNoEncontradoException;
 import ar.edu.unju.fi.arquitecturas.tp2banco.modelo.Cliente;
@@ -69,15 +70,18 @@ public class ClienteServiceImpl implements ClienteService {
     @Override
     @Transactional
     public void activarCuenta(String token) {
+        // Correcto: si no encuentra el token, lanza 404 Not Found
         Cliente cliente = clienteRepository.findByTokenActivacion(token)
                 .orElseThrow(() -> new RecursoNoEncontradoException("El token de activación provisto es inválido."));
 
         if (cliente.getEstadoCliente() == EstadoCliente.ACTIVO) {
-            throw new IllegalStateException("El token ya fue utilizado. La cuenta ya se encuentra ACTIVA.");
+            // CAMBIO: OperacionNoPermitidaException
+            throw new OperacionNoPermitidaException("El token ya fue utilizado. La cuenta ya se encuentra ACTIVA.");
         }
 
         if (cliente.getFechaExpiracionToken() != null && cliente.getFechaExpiracionToken().isBefore(LocalDateTime.now())) {
-            throw new IllegalStateException("El token de activación ha expirado.");
+            // CAMBIO: OperacionNoPermitidaException
+            throw new OperacionNoPermitidaException("El token de activación ha expirado.");
         }
 
         cliente.setEstadoCliente(EstadoCliente.ACTIVO);
@@ -164,22 +168,23 @@ public class ClienteServiceImpl implements ClienteService {
                 .build();
     }
 
-    @Override
-    @Transactional
     public void vincularAdherente(VincularAdherenteRequestDto request) {
         if (request.getRolFamiliar() == RolFamiliar.TITULAR) {
-            throw new IllegalArgumentException("No se puede vincular un adherente con el rol TITULAR");
+            // CAMBIO: OperacionNoPermitidaException
+            throw new OperacionNoPermitidaException("No se puede vincular un adherente con el rol TITULAR");
         }
 
         Cliente titular = buscarClientePorId(request.getTitularId());
         Cliente adherente = buscarClientePorId(request.getAdherenteId());
 
         if (adherente.getTitular() != null) {
-            throw new IllegalStateException("El cliente ingresado como adherente ya pertenece a un grupo familiar");
+            // CAMBIO: OperacionNoPermitidaException
+            throw new OperacionNoPermitidaException("El cliente ingresado como adherente ya pertenece a un grupo familiar");
         }
 
         if (titular.getTitular() != null) {
-            throw new IllegalStateException("Un cliente que es adherente no puede ser titular de otro grupo familiar");
+            // CAMBIO: OperacionNoPermitidaException
+            throw new OperacionNoPermitidaException("Un cliente que es adherente no puede ser titular de otro grupo familiar");
         }
 
         if (titular.getRolFamiliar() == null) {
