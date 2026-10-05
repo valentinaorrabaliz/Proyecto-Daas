@@ -1,0 +1,67 @@
+### Variables Globales
+@baseUrl = http://localhost:8080/api/v1/clientes
+
+### 1. Registrar un nuevo Cliente (Titular)
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nombre": "Carlos",
+  "apellido": "González",
+  "dni": "35123456",
+  "cuil": "20351234569",
+  "email": "carlos.gonzalez@example.com",
+  "telefono": "+543884123456"
+}
+
+> {%
+    client.global.set("cliente_id", response.body.id);
+    client.global.set("cliente_cuil", response.body.cuil);
+%}
+
+### 2. Activar la cuenta mediante el Token enviado por email
+# Reemplazar 'TOKEN_AQUI' por el token generado en BD o log
+GET {{baseUrl}}/activar?token=TOKEN_AQUI
+
+### 3. Vincular un Adherente/Familiar (Ejemplo: Hijo o Cónyuge)
+POST {{baseUrl}}/adherentes
+Content-Type: application/json
+
+{
+  "titularId": "{{cliente_id}}",
+  "nombre": "Lucas",
+  "apellido": "González",
+  "dni": "45987654",
+  "cuil": "20459876549",
+  "email": "lucas.gonzalez@example.com",
+  "telefono": "+543884987654",
+  "rolFamiliar": "HIJO"
+}
+
+### 4. Obtener Cliente por ID
+GET {{baseUrl}}/{{cliente_id}}
+
+### 5. Obtener Cliente por CUIL
+GET {{baseUrl}}/cuil/{{cliente_cuil}}
+
+### 6. Listar Clientes Paginados (Página 0, Tamaño 10)
+GET {{baseUrl}}/paginado?page=0&size=10&sort=apellido,asc
+
+### 7. Buscar Clientes por nombre o apellido
+GET {{baseUrl}}/buscar?termino=González
+
+### 8. Actualizar datos del Cliente
+PUT {{baseUrl}}/{{cliente_id}}
+Content-Type: application/json
+
+{
+  "nombre": "Carlos Alberto",
+  "apellido": "González",
+  "dni": "35123456",
+  "cuil": "20351234569",
+  "email": "carlos.alberto@example.com",
+  "telefono": "+543884000000"
+}
+
+### 9. Eliminar (Dar de baja) Cliente
+DELETE {{baseUrl}}/{{cliente_id}}

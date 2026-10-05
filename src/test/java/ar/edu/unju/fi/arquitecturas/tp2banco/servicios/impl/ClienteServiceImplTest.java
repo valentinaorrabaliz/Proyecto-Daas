@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +37,10 @@ class ClienteServiceImplTest {
     // Simulación del repositorio de clientes (Evita conectarse a la base de datos real)
     @Mock
     private ClienteRepository clienteRepository;
+
+    //Inyección del publicador de eventos de Spring
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     // Inyección de los mocks en la instancia real del servicio a probar
     @InjectMocks

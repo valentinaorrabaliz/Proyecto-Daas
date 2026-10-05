@@ -1,5 +1,6 @@
 package ar.edu.unju.fi.arquitecturas.tp2banco;
 
+import ar.edu.unju.fi.arquitecturas.tp2banco.enums.EstadoCliente;
 import ar.edu.unju.fi.arquitecturas.tp2banco.enums.EstadoCuenta;
 import ar.edu.unju.fi.arquitecturas.tp2banco.enums.EstadoProcesamiento;
 import ar.edu.unju.fi.arquitecturas.tp2banco.enums.TipoTransaccion;
@@ -37,6 +38,7 @@ class RelacionesJpaTest {
         cliente.setCuil("20123456789");
         cliente.setEmail("juan.perez@example.com");
         cliente.setTelefono("3881234567");
+        cliente.setEstadoCliente(EstadoCliente.ACTIVO);
 
         // 2. Crear CajaDeAhorro
         CajaDeAhorro cajaDeAhorro = new CajaDeAhorro();
@@ -79,6 +81,7 @@ class RelacionesJpaTest {
         cliente.setCuil("27876543219");
         cliente.setEmail("maria.gomez@example.com");
         cliente.setTelefono("3889876543");
+        cliente.setEstadoCliente(EstadoCliente.ACTIVO);
 
         entityManager.persist(cliente);
 
