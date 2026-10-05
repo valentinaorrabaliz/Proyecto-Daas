@@ -1,7 +1,5 @@
 package ar.edu.unju.fi.arquitecturas.tp2banco.servicios.impl;
 
-import ar.edu.unju.fi.arquitecturas.tp2banco.modelo.Cliente;
-import ar.edu.unju.fi.arquitecturas.tp2banco.repositorio.ConfiguracionParametroRepository;
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.TransaccionRequestDto;
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.request.TransferenciaRequestDto;
 import ar.edu.unju.fi.arquitecturas.tp2banco.dto.response.TransaccionResponseDto;
@@ -12,8 +10,10 @@ import ar.edu.unju.fi.arquitecturas.tp2banco.enums.TipoTransaccion;
 import ar.edu.unju.fi.arquitecturas.tp2banco.excepcion.OperacionNoPermitidaException;
 import ar.edu.unju.fi.arquitecturas.tp2banco.excepcion.RecursoNoEncontradoException;
 import ar.edu.unju.fi.arquitecturas.tp2banco.excepcion.SaldoInsuficienteException;
+import ar.edu.unju.fi.arquitecturas.tp2banco.modelo.Cliente;
 import ar.edu.unju.fi.arquitecturas.tp2banco.modelo.CuentaBancaria;
 import ar.edu.unju.fi.arquitecturas.tp2banco.modelo.Transaccion;
+import ar.edu.unju.fi.arquitecturas.tp2banco.repositorio.ConfiguracionParametroRepository;
 import ar.edu.unju.fi.arquitecturas.tp2banco.repositorio.CuentaBancariaRepository;
 import ar.edu.unju.fi.arquitecturas.tp2banco.repositorio.TransaccionRepository;
 import ar.edu.unju.fi.arquitecturas.tp2banco.servicios.TransaccionService;
@@ -27,6 +27,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -36,7 +37,9 @@ public class TransaccionServiceImpl implements TransaccionService {
     private final CuentaBancariaRepository cuentaRepository;
     private final ConfiguracionParametroRepository parametroRepository;
 
-    public TransaccionServiceImpl(TransaccionRepository transaccionRepository, CuentaBancariaRepository cuentaRepository, ConfiguracionParametroRepository parametroRepository) {
+    public TransaccionServiceImpl(TransaccionRepository transaccionRepository,
+                                  CuentaBancariaRepository cuentaRepository,
+                                  ConfiguracionParametroRepository parametroRepository) {
         this.transaccionRepository = transaccionRepository;
         this.cuentaRepository = cuentaRepository;
         this.parametroRepository = parametroRepository;
@@ -63,8 +66,8 @@ public class TransaccionServiceImpl implements TransaccionService {
         Cliente cliente = cuenta.getCliente();
 
         // 1. Determinar si pertenece a grupo familiar (Titular con adherentes o Adherente)
-        boolean esGrupoFamiliar = (cliente.getTitular() != null) ||
-                (cliente.getAdherentes() != null && !cliente.getAdherentes().isEmpty());
+        boolean esGrupoFamiliar = cliente != null && (cliente.getTitular() != null ||
+                (cliente.getAdherentes() != null && !cliente.getAdherentes().isEmpty()));
 
         String claveTope = esGrupoFamiliar ? "TOPE_DIARIO_GRUPO_FAMILIAR" : "TOPE_DIARIO_INDIVIDUAL";
         BigDecimal topePorDefecto = esGrupoFamiliar ? new BigDecimal("70000.00") : new BigDecimal("100000.00");
@@ -73,8 +76,10 @@ public class TransaccionServiceImpl implements TransaccionService {
                 .map(p -> new BigDecimal(p.getValor()))
                 .orElse(topePorDefecto);
 
-        // 2. Controlar la suma acumulada de extracciones del día
-        BigDecimal extraidoHoy = transaccionRepository.sumarExtraccionesDelDia(cuenta.getId());
+        // 2. Controlar la suma acumulada de extracciones del día (blindaje con Optional.ofNullable)
+        BigDecimal extraidoHoy = Optional.ofNullable(transaccionRepository.sumarExtraccionesDelDia(cuenta.getId()))
+                .orElse(BigDecimal.ZERO);
+
         BigDecimal totalConEstaExtraccion = extraidoHoy.add(transaccionRequest.getMonto());
 
         if (totalConEstaExtraccion.compareTo(topeDiario) > 0) {

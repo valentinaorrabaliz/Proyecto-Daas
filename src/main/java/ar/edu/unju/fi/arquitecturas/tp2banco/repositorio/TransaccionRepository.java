@@ -24,6 +24,7 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, UUID> 
 
     /**
      * Suma el monto total de las extracciones realizadas en el día actual para una cuenta específica.
+     * Retorna BigDecimal.ZERO si no existen extracciones registradas.
      */
     @Query("SELECT COALESCE(SUM(t.monto), 0) FROM Transaccion t " +
             "WHERE t.cuenta.id = :cuentaId " +

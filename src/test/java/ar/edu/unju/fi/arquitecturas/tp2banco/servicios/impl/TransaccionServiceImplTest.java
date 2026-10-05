@@ -9,8 +9,11 @@ import ar.edu.unju.fi.arquitecturas.tp2banco.enums.EstadoProcesamiento;
 import ar.edu.unju.fi.arquitecturas.tp2banco.enums.TipoTransaccion;
 import ar.edu.unju.fi.arquitecturas.tp2banco.excepcion.OperacionNoPermitidaException;
 import ar.edu.unju.fi.arquitecturas.tp2banco.excepcion.SaldoInsuficienteException;
+import ar.edu.unju.fi.arquitecturas.tp2banco.modelo.Cliente;
+import ar.edu.unju.fi.arquitecturas.tp2banco.modelo.ConfiguracionParametro;
 import ar.edu.unju.fi.arquitecturas.tp2banco.modelo.CuentaBancaria;
 import ar.edu.unju.fi.arquitecturas.tp2banco.modelo.Transaccion;
+import ar.edu.unju.fi.arquitecturas.tp2banco.repositorio.ConfiguracionParametroRepository;
 import ar.edu.unju.fi.arquitecturas.tp2banco.repositorio.CuentaBancariaRepository;
 import ar.edu.unju.fi.arquitecturas.tp2banco.repositorio.TransaccionRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +47,9 @@ class TransaccionServiceImplTest {
     @Mock
     private CuentaBancariaRepository cuentaRepository;
 
+    @Mock
+    private ConfiguracionParametroRepository parametroRepository;
+
     @InjectMocks
     private TransaccionServiceImpl transaccionService;
 
@@ -58,12 +64,19 @@ class TransaccionServiceImplTest {
     void setUp() {
         cuentaId = UUID.randomUUID();
 
+        // Crear un cliente simulado
+        Cliente clientePrueba = new Cliente();
+        clientePrueba.setId(UUID.randomUUID());
+        clientePrueba.setNombre("Juan");
+        clientePrueba.setApellido("Perez");
+
         // Cuenta de origen con un saldo inicial de $5000
         cuentaOrigen = new CuentaBancaria() {};
         cuentaOrigen.setId(cuentaId);
         cuentaOrigen.setCbu("001");
         cuentaOrigen.setSaldo(BigDecimal.valueOf(5000));
         cuentaOrigen.setEstado(EstadoCuenta.ACTIVA);
+        cuentaOrigen.setCliente(clientePrueba);
 
         // Cuenta de destino con un saldo inicial de $1000
         cuentaDestino = new CuentaBancaria() {};
@@ -71,6 +84,7 @@ class TransaccionServiceImplTest {
         cuentaDestino.setCbu("002");
         cuentaDestino.setSaldo(BigDecimal.valueOf(1000));
         cuentaDestino.setEstado(EstadoCuenta.ACTIVA);
+        cuentaDestino.setCliente(clientePrueba);
     }
 
     /**
@@ -122,7 +136,18 @@ class TransaccionServiceImplTest {
         tGuardada.setFecha(LocalDate.now());
         tGuardada.setHora(LocalTime.now());
 
+        ConfiguracionParametro parametroMock = ConfiguracionParametro.builder()
+                .clave("LIMITE_EXTRACCION")
+                .valor("10000")
+                .descripcion("Límite diario de extracción")
+                .build();
+
         when(cuentaRepository.findById(cuentaId)).thenReturn(Optional.of(cuentaOrigen));
+        when(parametroRepository.findById(any())).thenReturn(Optional.of(parametroMock));
+
+        // MOCK: Simula que no se han registrado extracciones previas en el día
+        when(transaccionRepository.sumarExtraccionesDelDia(cuentaId)).thenReturn(BigDecimal.ZERO);
+
         when(transaccionRepository.save(any(Transaccion.class))).thenReturn(tGuardada);
 
         // ACT
@@ -144,7 +169,17 @@ class TransaccionServiceImplTest {
                 .monto(BigDecimal.valueOf(10000))
                 .build();
 
+        ConfiguracionParametro parametroMock = ConfiguracionParametro.builder()
+                .clave("LIMITE_EXTRACCION")
+                .valor("20000")
+                .descripcion("Límite diario de extracción")
+                .build();
+
         when(cuentaRepository.findById(cuentaId)).thenReturn(Optional.of(cuentaOrigen));
+        when(parametroRepository.findById(any())).thenReturn(Optional.of(parametroMock));
+
+        // MOCK: Evita retornar null al sumar extracciones del día
+        when(transaccionRepository.sumarExtraccionesDelDia(cuentaId)).thenReturn(BigDecimal.ZERO);
 
         // ACT & ASSERT: Se verifica la excepción y que NO se registre ninguna transacción
         assertThatThrownBy(() -> transaccionService.realizarExtraccion(dto))

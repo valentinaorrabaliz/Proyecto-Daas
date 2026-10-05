@@ -1,0 +1,53 @@
+### Variables Globales
+@baseUrl = http://localhost:8080/api/v1/transacciones
+
+### 1. Realizar un Depósito
+POST {{baseUrl}}/deposito
+Content-Type: application/json
+
+{
+  "cuentaId": "{{cuenta_id_1}}",
+  "monto": 25000.50
+}
+
+### 2. Realizar una Extracción
+POST {{baseUrl}}/extraccion
+Content-Type: application/json
+
+{
+  "cuentaId": "{{cuenta_id_1}}",
+  "monto": 5000.00
+}
+
+### 3. Realizar una Transferencia entre cuentas (Origen -> Destino)
+POST {{baseUrl}}/transferir
+Content-Type: application/json
+
+{
+  "cbuOrigen": "{{cbu_origen}}",
+  "cbuDestino": "{{cbu_destino}}",
+  "monto": 12000.00,
+  "motivo": "Pago de servicios"
+}
+
+### 4. Obtener Transacción por ID
+# Reemplazar por el ID de una transacción generada
+GET {{baseUrl}}/AQUI_VA_EL_ID_TRANSACCION
+
+### 5. Obtener Historial de Transacciones de una Cuenta
+GET {{baseUrl}}/cuenta/{{cuenta_id_1}}
+
+### 6. Obtener Historial de Transacciones por Rango de Fechas
+GET {{baseUrl}}/cuenta/{{cuenta_id_1}}/fechas?inicio=2026-01-01T00:00:00&fin=2026-12-31T23:59:59
+
+### 7. Listar Transacciones Paginadas por Tipo (DEPOSITO)
+GET {{baseUrl}}/tipo/DEPOSITO?page=0&size=5
+
+### 8. Listar Transacciones Paginadas por Tipo (EXTRACCION)
+GET {{baseUrl}}/tipo/EXTRACCION?page=0&size=5
+
+### 9. Listar Transacciones Paginadas por Tipo (TRANSFERENCIA_ENVIADA)
+GET {{baseUrl}}/tipo/TRANSFERENCIA_ENVIADA?page=0&size=5
+
+### 10. Listar Transacciones Paginadas por Tipo (DEBITO_COMISION)
+GET {{baseUrl}}/tipo/DEBITO_COMISION?page=0&size=5
