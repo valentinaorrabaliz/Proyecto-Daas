@@ -1,8 +1,8 @@
 # Sistema de Gestión de Transacciones Bancarias
 
-**Institución:** Universidad Nacional de Jujuy (UNJu)  
-**Facultad:** Facultad de Ingeniería  
-**Materia:** Desarrollo y Arquitecturas Avanzadas de Software. 
+**Institución:** Universidad Nacional de Jujuy (UNJu)
+**Facultad:** Facultad de Ingeniería
+**Materia:** Desarrollo y Arquitecturas Avanzadas de Software
 
 ### Integrantes del Proyecto
 
@@ -13,63 +13,63 @@
 
 ## 1. Descripción del Proyecto
 
-El presente proyecto consiste en el diseño e implementación de una API RESTful para la gestión de un sistema bancario. 
-Entre sus funcionalidades principales, el módulo transaccional permite la ejecución de depósitos y extracciones actualizando el saldo de las cuentas de forma segura. En paralelo, el módulo de consultas y auditoría ofrece diferentes servicios para la trazabilidad de los movimientos:
-* **Consulta individual:** Obtención detallada de una transacción específica a través de su identificador único (UUID).
+El presente proyecto consiste en el diseño e implementación de una API RESTful robusta para la gestión de un sistema bancario.
+
+Entre sus funcionalidades principales, el módulo transaccional permite la ejecución de depósitos y extracciones actualizando el saldo de las cuentas de forma segura y aplicando reglas avanzadas de control de límites acumulados. En paralelo, el módulo de consultas, auditoría y eventos desacoplados ofrece servicios esenciales para la operatividad bancaria:
+
+* **Gestión de Transacciones:** Depósitos y extracciones con validación previa de saldo disponible y verificación de límites acumulados diarios según la condición del cliente (Cliente Individual vs. Grupo Familiar).
+* **Consulta individual:** Obtención detallada de una transacción específica mediante su identificador único (UUID).
 * **Historial por cuenta:** Recuperación del listado completo de movimientos asociados a una cuenta bancaria ordenados cronológicamente.
 * **Auditoría por rango de fechas:** Consulta filtrada de transacciones dentro de una ventana temporal específica (`inicio` y `fin`).
 * **Paginación por tipo de transacción:** Listado optimizado de movimientos (depósitos o extracciones) utilizando paginación en base de datos.
+* **Notificaciones y Procesos Asíncronos:** Notificación automática de activación mediante eventos de dominio (`ClienteCreadoEvent`) en segundo plano sin demorar la respuesta de la API REST.
 
 ---
 
 ## 2. Arquitectura del Repositorio y Capas
 
-La estructura del código fuente está organizada bajo una arquitectura en capas, asegurando la separación clara de responsabilidades:
+La estructura del código fuente está organizada bajo una arquitectura en capas, asegurando una separación clara de responsabilidades:
 
 ```text
 ar.edu.unju.fi.arquitecturas.tp2banco
 │
-├── enums           # Definición de constantes del dominio (estados de cuenta, tipos de transacción y estados de procesamiento).
-├── excepcion       # Clases de excepciones personalizadas para el control de reglas de negocio e inconsistencias.
-├── modelo          # Entidades JPA que representan las tablas de la base de datos y su mapeo objeto-relacional.
-├── repositorio     # Interfaces de Spring Data JPA encargadas del acceso, persistencia y consultas paginadas en la BD.
-└── servicios       # Lógica de negocio del sistema, validaciones financieras y coordinación entre repositorios.
-    └── impl        # Implementaciones concretas de las interfaces de servicio.
+├── config          # Configuraciones globales de Spring
+├── controlador     # Controladores REST que exponen los endpoints
+├── dto             # Objetos de Transferencia de Datos
+├── enums            # Constantes del dominio
+├── evento          # Eventos de dominio y listeners
+├── excepcion       # Excepciones y manejador global de errores
+├── modelo          # Entidades JPA
+├── repositorio     # Interfaces Spring Data JPA
+├── scheduler       # Tareas programadas
+└── servicios       # Lógica de negocio y validaciones
+    └── impl         # Implementaciones de los servicios
 ```
 
 ---
 
-## 3. Flujo de Trabajo
+## 3. Tecnologías Utilizadas
 
-```mermaid
-graph TD
-    A["1. Iniciar Aplicación / Petición del Cliente"] --> B["2. TransaccionServiceImpl"]
+**Lenguaje de Programación:**
+Java 25 (OpenJDK / Eclipse Temurin)
 
-    B --> C["3. Validar Monto y Estado de Cuenta"]
-    C --> D["4. Actualizar Saldo en CuentaBancaria"]
-    D --> E["5. Registrar Transacción con Fecha y Hora"]
-    E --> F["6. Guardar en Base de Datos vía Repositorio"]
+**Framework Principal:**
+Spring Boot 3.x
 
-    A --> G["7. Consultar Historial o Transacciones Paginadas"]
-    G --> H["8. Obtener Registro o Page de Transacciones"]
-```
+**Acceso a Datos y ORM:**
+Spring Data JPA / Hibernate
 
----
+**Base de Datos:**
+H2 Database (en memoria para desarrollo y pruebas) / PostgreSQL
 
-## 4. Tecnologías Utilizadas
+**Librerías de Soporte:**
+Lombok (`@Getter`, `@Setter`, `@SuperBuilder`)
 
-* **Lenguaje de Programación:** Java 25
-* **Framework Principal:** Spring Boot 3.x
-* **Acceso a Datos:** Spring Data JPA
-* **Librerías de Soporte:** Lombok (`@Getter`, `@Setter`, `@SuperBuilder`)
-* **Gestor de Dependencias:** Apache Maven
+**Testing Unitario y Mocks:**
+JUnit 5, Mockito
 
----
+**Pruebas de API y Cliente HTTP:**
+IntelliJ HTTP Client (`src/main/resources/http/`)
 
-## 5. Decisiones de Diseño y Reglas de Negocio
-
-1. **Precisión Monetaria:** Los montos se gestionan  mediante el tipo de dato `BigDecimal` para evitar imprecisiones financieras.
-2. **Restricción en Entidades:** Se prescinde del uso de la anotación `@Data` en las entidades del modelo JPA, utilizando de forma explícita `@Getter` y `@Setter` para evitar comportamientos no deseados en métodos como `hashCode` y `equals`.
-3. **Paginación de Consultas:** Las búsquedas de transacciones por tipo se implementan utilizando las interfaces `Pageable` y `Page<T>` de Spring Data, optimizando el rendimiento del servidor al fragmentar los resultados devueltos por la base de datos.
-
----
+**Gestor de Dependencias y Construcción:**
+Apache Maven
