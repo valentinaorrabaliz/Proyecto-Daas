@@ -6,7 +6,7 @@ POST {{baseUrl}}
 Content-Type: application/json
 
 {
-  "clienteId": "{{cliente_id}}",
+  "clienteId": "0x2834f162194d4e1e857c4bf8611e673b",
   "alias": "CARLOS.AHORRO.JUJUY",
   "cbu": "0110000000000000000001",
   "tipoCuenta": "CAJA_AHORRO",
@@ -23,7 +23,7 @@ POST {{baseUrl}}
 Content-Type: application/json
 
 {
-  "clienteId": "{{cliente_id}}",
+  "clienteId": "0x2834f162194d4e1e857c4bf8611e673b",
   "alias": "CARLOS.CC.BANCO",
   "cbu": "0110000000000000000002",
   "tipoCuenta": "CUENTA_CORRIENTE",
@@ -44,4 +44,4 @@ GET {{baseUrl}}/{{cuenta_id_1}}
 GET {{baseUrl}}/cbu/{{cbu_origen}}
 
 ### 5. Obtener todas las cuentas del Cliente
-GET {{baseUrl}}/cliente/{{cliente_id}}
+GET {{baseUrl}}/cliente/0x2834f162194d4e1e857c4bf8611e673b
