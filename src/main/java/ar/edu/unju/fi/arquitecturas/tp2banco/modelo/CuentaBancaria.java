@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -75,5 +76,6 @@ public abstract class CuentaBancaria extends Auditable {
      * Relación bidireccional de uno a muchos hacia las transacciones de esta cuenta.
      * */
     @OneToMany(mappedBy = "cuenta", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<Transaccion> transacciones = new ArrayList<>();
 }

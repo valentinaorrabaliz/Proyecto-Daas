@@ -21,7 +21,7 @@ Content-Type: application/json
 
 ### 2. Activar la cuenta mediante el Token enviado por email
 # Reemplazar 'TOKEN_AQUI' por el token generado en BD o log
-GET {{baseUrl}}/activar?token=TOKEN_AQUI
+GET {{baseUrl}}/activar?token=b51d4185-4209-40e1-ad52-67d711b05f1b
 
 ### 3. Vincular un Adherente/Familiar (Ejemplo: Hijo o Cónyuge)
 POST {{baseUrl}}/adherentes
